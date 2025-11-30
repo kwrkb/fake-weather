@@ -1,6 +1,6 @@
 {
-  "name": "偽天気予報",
-  "short_name": "偽天気",
+  "name": "Fweather",
+  "short_name": "Fweather",
   "description": "ランダムな偽の天気予報を表示するジョークアプリ",
   "start_url": "./index.html",
   "display": "standalone",
