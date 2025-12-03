@@ -27,126 +27,137 @@
             font-family: 'Noto Sans JP', sans-serif;
             transition: background 1s ease-in-out;
             background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            /* animation: gradientBG 15s ease infinite; Remove generic animation, let weather control it */
             /* iOS safe area対応 */
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
+            overflow: hidden; /* Prevent scroll */
         }
 
-        /* 背景グラデーションアニメーション */
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* テキストシャドウ - 背景透過時の可読性確保 */
+        .text-shadow-strong {
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3);
         }
 
-        /* グラスモーフィズムカード - 洗練されたスタイル */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.15); /* 透明度を下げる */
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15); /* 影を少し柔らかく */
-            backdrop-filter: blur(20px); /* ぼかしを強く */
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 32px; /* 角丸を大きく */
-            border: 1px solid rgba(255, 255, 255, 0.2); /* ボーダーを微調整 */
+        .text-shadow-light {
+            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
         }
 
         /* アイコンのアニメーション */
         .weather-icon-anim {
-            animation: float 4s ease-in-out infinite; /* 少しゆっくりに */
+            animation: float 5s ease-in-out infinite;
         }
 
         @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
-            100% { transform: translateY(0px); }
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
         }
 
         /* テキストのフェードイン・スライドアップ */
         .fade-slide-up {
-            animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* イージングを調整 */
+            animation: fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
 
         @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ローディングスピナー */
-        .loader {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #ffffff;
-            width: 40px;
-            height: 40px;
-            -webkit-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         /* リフレッシュボタン */
         .refresh-btn {
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, background-color 0.3s;
+            backdrop-filter: blur(5px);
+            background-color: rgba(255,255,255,0.2);
         }
         .refresh-btn:hover {
             transform: rotate(180deg) scale(1.1);
+            background-color: rgba(255,255,255,0.4);
         }
         .refresh-btn:active {
             transform: rotate(360deg) scale(0.95);
         }
+
+        /* Canvas用コンテナ */
+        #weather-effects-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* CSS Weather Layer (Clouds etc) */
+        .weather-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
     </style>
 </head>
-<body id="app-body" class="bg-gradient-to-br from-blue-400 to-indigo-500 min-h-screen flex items-center justify-center p-4 text-white overflow-hidden">
+<body id="app-body" class="bg-gradient-to-br from-blue-400 to-indigo-500 min-h-screen text-white">
 
-    <!-- メインカード -->
-    <main class="glass-card w-full max-w-sm p-10 text-center relative z-10 shadow-2xl">
+    <!-- 背景エフェクトレイヤー -->
+    <div id="weather-effects-container"></div>
+
+    <!-- メインコンテンツ (z-index 10 to sit above effects) -->
+    <main class="relative z-10 w-full h-screen flex flex-col justify-between p-6 pb-12 safe-area-padding">
         
         <!-- ヘッダー -->
-        <header class="mb-10 flex items-center justify-between">
-            <h1 class="text-sm font-bold tracking-widest uppercase opacity-70">Fake Weather</h1>
+        <header class="w-full flex items-center justify-between pt-4 px-2 fade-slide-up" style="animation-delay: 0s;">
+            <h1 class="text-sm font-bold tracking-widest uppercase opacity-80 text-shadow-light">Fake Weather</h1>
             <!-- リフレッシュボタン -->
-            <button id="refresh-btn" class="refresh-btn p-2 rounded-full hover:bg-white/10 focus:outline-none" aria-label="天気を更新">
-                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+            <button id="refresh-btn" class="refresh-btn p-3 rounded-full shadow-lg border border-white/20" aria-label="天気を更新">
+                <i data-lucide="refresh-cw" class="w-6 h-6 drop-shadow-md"></i>
             </button>
         </header>
 
-        <!-- 天気コンテンツ -->
-        <div id="weather-content" class="transition-all duration-500">
+        <!-- 天気コンテンツ (Center) -->
+        <div id="weather-content" class="flex-grow flex flex-col items-center justify-center -mt-10">
             <!-- 天気アイコン -->
-            <div class="h-48 flex items-center justify-center mb-6">
-                <div id="weather-icon-container" class="weather-icon-anim drop-shadow-xl text-white">
+            <div class="mb-8">
+                <div id="weather-icon-container" class="weather-icon-anim drop-shadow-2xl filter">
                     <!-- アイコンはここに挿入されます -->
-                    <i data-lucide="sun" class="w-32 h-32" stroke-width="1.5"></i>
+                    <i data-lucide="sun" class="w-40 h-40 text-white" stroke-width="1.5"></i>
                 </div>
             </div>
 
             <!-- 天気状態 -->
-            <h2 id="weather-status" class="text-3xl font-bold mb-1 tracking-tight drop-shadow-sm fade-slide-up" style="animation-delay: 0.1s;">快晴</h2>
+            <h2 id="weather-status" class="text-5xl font-black mb-2 tracking-tight text-shadow-strong fade-slide-up" style="animation-delay: 0.1s;">快晴</h2>
             
             <!-- 気温 -->
             <div class="fade-slide-up" style="animation-delay: 0.2s;">
-                <p class="text-7xl font-bold mb-8 tracking-tighter drop-shadow-md flex justify-center items-start leading-none">
-                    <span id="temperature">24</span><span class="text-3xl font-medium mt-2 ml-1">°C</span>
+                <p class="text-[7rem] font-bold tracking-tighter text-shadow-strong flex items-start leading-none opacity-90">
+                    <span id="temperature">24</span><span class="text-4xl font-medium mt-4 ml-1">°C</span>
                 </p>
             </div>
+        </div>
 
-            <!-- 位置情報 -->
-            <div class="fade-slide-up" style="animation-delay: 0.3s;">
-                <div class="inline-flex items-center justify-center gap-2 bg-white/20 py-2.5 px-5 rounded-full backdrop-blur-md border border-white/10 hover:bg-white/30 transition-colors cursor-default">
-                    <i data-lucide="map-pin" class="w-4 h-4 opacity-80"></i>
-                    <span id="location-text" class="text-sm font-medium tracking-wide">現在地</span>
-                </div>
+        <!-- 位置情報 (Bottom) -->
+        <div class="w-full flex justify-center fade-slide-up pb-8" style="animation-delay: 0.3s;">
+            <div class="inline-flex items-center justify-center gap-2 bg-black/20 py-3 px-6 rounded-full backdrop-blur-md border border-white/20 hover:bg-black/30 transition-colors cursor-default shadow-lg">
+                <i data-lucide="map-pin" class="w-4 h-4 text-white/90"></i>
+                <span id="location-text" class="text-sm font-bold tracking-wide text-white/95">現在地</span>
             </div>
         </div>
 
         <!-- オフライン表示 -->
-        <div id="offline-indicator" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
-            OFFLINE
+        <div id="offline-indicator" class="hidden absolute top-20 left-1/2 -translate-x-1/2 bg-amber-500/90 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg backdrop-blur-sm border border-amber-400/50 z-50">
+            OFFLINE MODE
         </div>
 
     </main>
@@ -179,17 +190,17 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // 天気データの定義 (Lucideアイコン名を使用)
+        // 天気データの定義
         const weatherTypes = [
-            { name: '快晴', icon: 'sun', tempRange: [25, 38], bgClass: 'from-orange-400 via-rose-300 to-amber-200', textColor: 'text-white' },
-            { name: '晴れ', icon: 'cloud-sun', tempRange: [20, 30], bgClass: 'from-sky-400 via-blue-300 to-cyan-200', textColor: 'text-white' },
-            { name: '曇り', icon: 'cloud', tempRange: [10, 25], bgClass: 'from-slate-400 via-gray-300 to-zinc-200', textColor: 'text-white' },
-            { name: '雨', icon: 'cloud-rain', tempRange: [10, 22], bgClass: 'from-blue-700 via-blue-500 to-slate-400', textColor: 'text-white' },
-            { name: '雪', icon: 'snowflake', tempRange: [-10, 5], bgClass: 'from-indigo-100 via-purple-100 to-white', textColor: 'text-slate-700' },
-            { name: '雷雨', icon: 'cloud-lightning', tempRange: [15, 28], bgClass: 'from-slate-900 via-purple-900 to-slate-800', textColor: 'text-white' },
-            { name: '霧', icon: 'cloud-fog', tempRange: [5, 18], bgClass: 'from-stone-400 via-gray-300 to-zinc-300', textColor: 'text-white' },
-            { name: '猛暑', icon: 'thermometer-sun', tempRange: [35, 45], bgClass: 'from-red-600 via-orange-500 to-yellow-500', textColor: 'text-white' },
-            { name: '極寒', icon: 'thermometer-snowflake', tempRange: [-30, -10], bgClass: 'from-cyan-700 via-blue-600 to-indigo-600', textColor: 'text-white' }
+            { name: '快晴', type: 'clear', icon: 'sun', tempRange: [25, 38], bgClass: 'from-orange-400 via-rose-300 to-amber-200', textColor: 'text-white' },
+            { name: '晴れ', type: 'cloudy-sun', icon: 'cloud-sun', tempRange: [20, 30], bgClass: 'from-sky-400 via-blue-300 to-cyan-200', textColor: 'text-white' },
+            { name: '曇り', type: 'cloudy', icon: 'cloud', tempRange: [10, 25], bgClass: 'from-slate-400 via-gray-300 to-zinc-200', textColor: 'text-white' },
+            { name: '雨', type: 'rain', icon: 'cloud-rain', tempRange: [10, 22], bgClass: 'from-blue-800 via-slate-600 to-slate-500', textColor: 'text-white' },
+            { name: '雪', type: 'snow', icon: 'snowflake', tempRange: [-10, 5], bgClass: 'from-slate-100 via-slate-200 to-white', textColor: 'text-slate-800' }, // 雪は背景が白いのでテキスト色注意
+            { name: '雷雨', type: 'thunder', icon: 'cloud-lightning', tempRange: [15, 28], bgClass: 'from-slate-900 via-purple-900 to-slate-800', textColor: 'text-white' },
+            { name: '霧', type: 'fog', icon: 'cloud-fog', tempRange: [5, 18], bgClass: 'from-stone-400 via-gray-300 to-zinc-300', textColor: 'text-white' },
+            { name: '猛暑', type: 'heat', icon: 'thermometer-sun', tempRange: [35, 45], bgClass: 'from-red-600 via-orange-500 to-yellow-500', textColor: 'text-white' },
+            { name: '極寒', type: 'cold', icon: 'thermometer-snowflake', tempRange: [-30, -10], bgClass: 'from-cyan-900 via-blue-800 to-indigo-900', textColor: 'text-white' }
         ];
 
         // 状態管理
@@ -204,13 +215,15 @@
             temp: document.getElementById('temperature'),
             location: document.getElementById('location-text'),
             content: document.getElementById('weather-content'),
-            refreshBtn: document.getElementById('refresh-btn')
+            refreshBtn: document.getElementById('refresh-btn'),
+            effectsContainer: document.getElementById('weather-effects-container')
         };
 
         // 初期化処理
         document.addEventListener('DOMContentLoaded', () => {
             initLocation();
-            generateRandomWeather();
+            // generateRandomWeather(); // 下記EffectManagerの実装後に呼び出すため一時コメントアウトするか、エラーにならない範囲で動かす
+             generateRandomWeather();
         });
 
         // リフレッシュボタン
@@ -266,8 +279,302 @@
             isLocating = false;
         }
 
+        // --- Weather Effects Manager ---
+        const EffectManager = {
+            currentReqId: null,
+            ctx: null,
+            canvas: null,
+            resizeHandler: null,
+            elements: [],
+
+            initCanvas: function() {
+                // 既存のCanvasがあれば削除
+                const oldCanvas = ui.effectsContainer.querySelector('canvas');
+                if (oldCanvas) oldCanvas.remove();
+
+                // リサイズイベントのクリーンアップ
+                if (this.resizeHandler) {
+                    window.removeEventListener('resize', this.resizeHandler);
+                    this.resizeHandler = null;
+                }
+
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                ui.effectsContainer.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+
+                // リサイズ対応
+                this.resizeHandler = () => {
+                    if (this.canvas) {
+                        this.canvas.width = window.innerWidth;
+                        this.canvas.height = window.innerHeight;
+                    }
+                };
+                window.addEventListener('resize', this.resizeHandler);
+            },
+
+            clear: function() {
+                if (this.currentReqId) {
+                    cancelAnimationFrame(this.currentReqId);
+                    this.currentReqId = null;
+                }
+
+                // リサイズイベントのクリーンアップ
+                if (this.resizeHandler) {
+                    window.removeEventListener('resize', this.resizeHandler);
+                    this.resizeHandler = null;
+                }
+
+                ui.effectsContainer.innerHTML = '';
+                this.elements = [];
+                this.ctx = null;
+                this.canvas = null;
+            },
+
+            // 雨エフェクト
+            startRain: function(isThunder = false) {
+                this.initCanvas();
+                const raindrops = [];
+                const count = isThunder ? 300 : 150;
+
+                for (let i = 0; i < count; i++) {
+                    raindrops.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        length: Math.random() * 20 + 10,
+                        speed: Math.random() * 10 + 15
+                    });
+                }
+
+                let thunderFlash = 0;
+
+                const animate = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    // 雷フラッシュ (背景を白く光らせる)
+                    if (isThunder) {
+                        if (Math.random() < 0.005) { // 確率で発火
+                             thunderFlash = 20; // フラッシュの持続フレーム
+                        }
+                        if (thunderFlash > 0) {
+                            this.ctx.fillStyle = `rgba(255, 255, 255, ${thunderFlash * 0.01})`; // 最大0.2の透明度
+                            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                            thunderFlash--;
+                        }
+                    }
+
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+
+                    raindrops.forEach(drop => {
+                        this.ctx.moveTo(drop.x, drop.y);
+                        this.ctx.lineTo(drop.x, drop.y + drop.length);
+                        drop.y += drop.speed;
+                        if (drop.y > this.canvas.height) {
+                            drop.y = -drop.length;
+                            drop.x = Math.random() * this.canvas.width;
+                        }
+                    });
+
+                    this.ctx.stroke();
+                    this.currentReqId = requestAnimationFrame(animate);
+                };
+                animate();
+            },
+
+            // 雪エフェクト
+            startSnow: function() {
+                this.initCanvas();
+                const snowflakes = [];
+                for (let i = 0; i < 100; i++) {
+                    snowflakes.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        radius: Math.random() * 3 + 1,
+                        speed: Math.random() * 1 + 0.5,
+                        drift: Math.random() * 2 - 1
+                    });
+                }
+
+                const animate = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    this.ctx.beginPath();
+
+                    snowflakes.forEach(flake => {
+                        this.ctx.moveTo(flake.x, flake.y);
+                        this.ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                        flake.y += flake.speed;
+                        flake.x += flake.drift;
+
+                        if (flake.y > this.canvas.height) {
+                            flake.y = -flake.radius;
+                            flake.x = Math.random() * this.canvas.width;
+                        }
+                        if (flake.x > this.canvas.width) flake.x = 0;
+                        if (flake.x < 0) flake.x = this.canvas.width;
+                    });
+
+                    this.ctx.fill();
+                    this.currentReqId = requestAnimationFrame(animate);
+                };
+                animate();
+            },
+
+            // 曇り/霧エフェクト (DOM + CSS Animation)
+            startCloudy: function(isFog = false) {
+                const cloudCount = isFog ? 5 : 3;
+                const opacity = isFog ? 0.4 : 0.3;
+
+                for(let i=0; i<cloudCount; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = 'weather-layer';
+                    // シンプルなCSS円形グラデーションで雲/霧を表現
+                    const size = 300 + Math.random() * 200;
+                    cloud.style.background = `radial-gradient(circle, rgba(255,255,255,${opacity}) 0%, rgba(255,255,255,0) 70%)`;
+                    cloud.style.width = `${size}px`;
+                    cloud.style.height = `${size}px`;
+                    cloud.style.borderRadius = '50%';
+                    cloud.style.top = `${Math.random() * 100}%`;
+                    cloud.style.left = `${Math.random() * 100}%`;
+                    cloud.style.position = 'absolute';
+                    cloud.style.filter = 'blur(40px)';
+                    cloud.style.transform = 'translate(-50%, -50%)';
+
+                    // アニメーション
+                    const duration = 20 + Math.random() * 40;
+                    cloud.style.transition = `transform ${duration}s linear`;
+
+                    // 少し動きをつける
+                    const moveX = (Math.random() - 0.5) * 200;
+                    const moveY = (Math.random() - 0.5) * 50;
+
+                    // シンプルなアニメーションループ
+                    const keyframes = [
+                        { transform: `translate(-50%, -50%) translate(0, 0)` },
+                        { transform: `translate(-50%, -50%) translate(${moveX}px, ${moveY}px)` },
+                        { transform: `translate(-50%, -50%) translate(0, 0)` }
+                    ];
+
+                    cloud.animate(keyframes, {
+                        duration: duration * 1000,
+                        iterations: Infinity,
+                        easing: 'ease-in-out'
+                    });
+
+                    ui.effectsContainer.appendChild(cloud);
+                }
+            },
+
+            // 快晴/晴れエフェクト
+            startSun: function() {
+                // 太陽光の表現
+                const sunRay = document.createElement('div');
+                sunRay.className = 'weather-layer';
+                sunRay.style.background = 'conic-gradient(from 0deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 10%, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.1) 80%, rgba(255,255,255,0) 90%, rgba(255,255,255,0.1) 100%)';
+                sunRay.style.width = '200vmax'; // 画面より大きく
+                sunRay.style.height = '200vmax';
+                sunRay.style.position = 'absolute';
+                sunRay.style.top = '50%';
+                sunRay.style.left = '50%';
+                sunRay.style.transform = 'translate(-50%, -50%)';
+                sunRay.style.borderRadius = '50%';
+                sunRay.style.maskImage = 'radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)';
+                sunRay.style.webkitMaskImage = 'radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%)';
+
+                sunRay.animate([
+                    { transform: 'translate(-50%, -50%) rotate(0deg)' },
+                    { transform: 'translate(-50%, -50%) rotate(360deg)' }
+                ], {
+                    duration: 60000,
+                    iterations: Infinity,
+                    easing: 'linear'
+                });
+
+                ui.effectsContainer.appendChild(sunRay);
+            },
+
+            // 猛暑エフェクト (陽炎)
+            startHeat: function() {
+                this.initCanvas();
+                const particles = [];
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        radius: Math.random() * 20 + 10,
+                        speed: Math.random() * 1 + 0.5,
+                        opacity: 0
+                    });
+                }
+
+                const animate = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    particles.forEach(p => {
+                        // ゆらゆら上昇するパーティクル
+                        p.y -= p.speed;
+                        p.opacity += 0.01;
+                        if(p.opacity > 0.3) p.opacity = 0.3; // max opacity
+
+                        if (p.y < -50) {
+                            p.y = this.canvas.height + 50;
+                            p.x = Math.random() * this.canvas.width;
+                            p.opacity = 0;
+                        }
+
+                        this.ctx.fillStyle = `rgba(255, 200, 100, ${p.opacity * 0.5})`; // オレンジ色
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    });
+
+                    this.currentReqId = requestAnimationFrame(animate);
+                };
+                animate();
+            },
+
+            // 極寒エフェクト (ダイヤモンドダスト的なキラキラ)
+            startCold: function() {
+                this.initCanvas();
+                const particles = [];
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        radius: Math.random() * 2,
+                        opacity: Math.random()
+                    });
+                }
+
+                const animate = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    particles.forEach(p => {
+                        // 点滅する
+                        p.opacity += (Math.random() - 0.5) * 0.1;
+                        if (p.opacity < 0) p.opacity = 0;
+                        if (p.opacity > 1) p.opacity = 1;
+
+                        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    });
+
+                    this.currentReqId = requestAnimationFrame(animate);
+                };
+                animate();
+            }
+        };
+
         // 天気生成ロジック
         function generateRandomWeather() {
+            // エフェクトリセット
+            EffectManager.clear();
+
             const weather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
             
             const min = weather.tempRange[0];
@@ -275,39 +582,73 @@
             const temp = Math.floor(Math.random() * (max - min + 1)) + min;
 
             // アイコン更新
-            ui.iconContainer.innerHTML = `<i data-lucide="${weather.icon}" class="w-32 h-32" stroke-width="1.5"></i>`;
+            const iconColor = (weather.type === 'snow' || weather.type === 'fog') ? 'text-slate-700' : 'text-white';
+            ui.iconContainer.innerHTML = `<i data-lucide="${weather.icon}" class="w-40 h-40 ${iconColor}" stroke-width="1.5"></i>`;
             lucide.createIcons();
 
             ui.status.innerText = weather.name;
             ui.temp.innerText = temp;
             
-            ui.body.className = `min-h-screen flex items-center justify-center p-4 transition-colors duration-1000 bg-gradient-to-br ${weather.bgClass}`;
+            // 背景色更新
+            ui.body.className = `min-h-screen text-white overflow-hidden transition-colors duration-1000 bg-gradient-to-br ${weather.bgClass}`;
             
-            // 雪の場合はテキストカラーを暗くする
-            if (weather.name === '雪' || weather.name === '霧') {
-                ui.body.classList.add('text-slate-800');
+            // テキスト色の調整
+            if (weather.type === 'snow' || weather.type === 'fog') {
                 ui.body.classList.remove('text-white');
-                ui.iconContainer.classList.add('text-slate-800');
-                ui.iconContainer.classList.remove('text-white');
+                ui.body.classList.add('text-slate-800');
+                ui.status.classList.remove('text-shadow-strong');
+                ui.status.classList.add('text-shadow-none');
             } else {
                 ui.body.classList.add('text-white');
                 ui.body.classList.remove('text-slate-800');
-                ui.iconContainer.classList.add('text-white');
-                ui.iconContainer.classList.remove('text-slate-800');
+                ui.status.classList.remove('text-shadow-none');
+                ui.status.classList.add('text-shadow-strong');
+            }
+
+            // エフェクト適用
+            switch(weather.type) {
+                case 'clear':
+                case 'cloudy-sun':
+                    EffectManager.startSun();
+                    if(weather.type === 'cloudy-sun') EffectManager.startCloudy();
+                    break;
+                case 'rain':
+                    EffectManager.startRain(false);
+                    break;
+                case 'thunder':
+                    EffectManager.startRain(true);
+                    break;
+                case 'snow':
+                    EffectManager.startSnow();
+                    break;
+                case 'cloudy':
+                    EffectManager.startCloudy();
+                    break;
+                case 'fog':
+                    EffectManager.startCloudy(true);
+                    break;
+                case 'heat':
+                    EffectManager.startHeat();
+                    EffectManager.startSun();
+                    break;
+                case 'cold':
+                    EffectManager.startCold();
+                    break;
             }
 
             // アニメーションリセット
             ui.iconContainer.classList.remove('weather-icon-anim');
-            void ui.iconContainer.offsetWidth; // リフロー強制
+            void ui.iconContainer.offsetWidth;
             ui.iconContainer.classList.add('weather-icon-anim');
 
-            // テキストアニメーションリセット
             const animatedElements = document.querySelectorAll('.fade-slide-up');
             animatedElements.forEach(el => {
                 el.style.animation = 'none';
-                el.offsetHeight; /* trigger reflow */
+                el.offsetHeight;
                 el.style.animation = null;
             });
+
+            console.log("Generated weather:", weather.name, weather.type);
         }
     </script>
 </body>
