@@ -4,7 +4,7 @@
 
 🔗 **Demo**: [https://kwrkb.github.io/fake-weather/](https://kwrkb.github.io/fake-weather/)
 
-![偽天気予報スクリーンショット](https://img.shields.io/badge/PWA-Ready-5A0FC8?logo=pwa)
+![PWA Ready](https://img.shields.io/badge/PWA-Ready-5A0FC8?logo=pwa)
 
 ## 特徴
 
@@ -13,20 +13,22 @@
 - 📱 PWA対応 - ホーム画面に追加してアプリとして使用可能
 - 🌐 オフライン対応
 - 🎨 天気に応じた美しいグラデーション背景
+- ✨ フルスクリーン没入型エフェクト（雨・雪・雷・霧など）
+- 🖼️ Lucideアイコンによるモダンなデザイン
 
 ## 天気パターン
 
-| 天気 | アイコン | 気温範囲 |
-|------|---------|----------|
-| 快晴 | ☀️ | 25〜38°C |
-| 晴れ | 🌤️ | 20〜30°C |
-| 曇り | ☁️ | 10〜25°C |
-| 雨 | 🌧️ | 10〜22°C |
-| 雪 | ❄️ | -10〜5°C |
-| 雷雨 | ⛈️ | 15〜28°C |
-| 霧 | 🌫️ | 5〜18°C |
-| 猛暑 | 🥵 | 35〜45°C |
-| 極寒 | 🥶 | -30〜-10°C |
+| 天気 | Lucideアイコン | 気温範囲 | エフェクト |
+|------|---------------|----------|-----------|
+| 快晴 | sun | 25〜38°C | 太陽光線回転 |
+| 晴れ | cloud-sun | 20〜30°C | 太陽光線 + 雲 |
+| 曇り | cloud | 10〜25°C | 浮遊する雲 |
+| 雨 | cloud-rain | 10〜22°C | 雨粒アニメーション |
+| 雪 | snowflake | -10〜5°C | 雪降りエフェクト |
+| 雷雨 | cloud-lightning | 15〜28°C | 雨 + 雷フラッシュ |
+| 霧 | cloud-fog | 5〜18°C | 霧の浮遊エフェクト |
+| 猛暑 | thermometer-sun | 35〜45°C | 陽炎パーティクル |
+| 極寒 | thermometer-snowflake | -30〜-10°C | ダイヤモンドダスト |
 
 ## インストール方法
 
@@ -42,7 +44,10 @@
 
 - HTML / CSS / JavaScript
 - Tailwind CSS（CDN）
+- Lucide Icons（SVGアイコン）
 - Noto Sans JP（Google Fonts）
+- Canvas API（天気エフェクト描画）
+- Web Animations API（CSSアニメーション）
 - Service Worker（オフライン対応）
 - OpenStreetMap Nominatim API（逆ジオコーディング）
 
