@@ -19,6 +19,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* カスタムスタイル定義 */
         body {
@@ -38,35 +40,36 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* グラスモーフィズムカード */
+        /* グラスモーフィズムカード - 洗練されたスタイル */
         .glass-card {
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.15); /* 透明度を下げる */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15); /* 影を少し柔らかく */
+            backdrop-filter: blur(20px); /* ぼかしを強く */
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px; /* 角丸を大きく */
+            border: 1px solid rgba(255, 255, 255, 0.2); /* ボーダーを微調整 */
         }
 
         /* アイコンのアニメーション */
         .weather-icon-anim {
-            animation: float 3s ease-in-out infinite;
+            animation: float 4s ease-in-out infinite; /* 少しゆっくりに */
         }
 
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-12px); }
             100% { transform: translateY(0px); }
         }
 
-        /* テキストのフェードイン */
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
+        /* テキストのフェードイン・スライドアップ */
+        .fade-slide-up {
+            animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* イージングを調整 */
             opacity: 0;
+            transform: translateY(20px);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -88,59 +91,70 @@
 
         /* リフレッシュボタン */
         .refresh-btn {
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
         }
         .refresh-btn:hover {
-            transform: rotate(180deg);
+            transform: rotate(180deg) scale(1.1);
         }
         .refresh-btn:active {
-            transform: rotate(360deg) scale(0.9);
+            transform: rotate(360deg) scale(0.95);
         }
     </style>
 </head>
 <body id="app-body" class="bg-gradient-to-br from-blue-400 to-indigo-500 min-h-screen flex items-center justify-center p-4 text-white overflow-hidden">
 
     <!-- メインカード -->
-    <main class="glass-card w-full max-w-md p-8 text-center relative z-10">
+    <main class="glass-card w-full max-w-sm p-10 text-center relative z-10 shadow-2xl">
         
         <!-- ヘッダー -->
-        <header class="mb-8 flex items-center justify-center gap-3">
-            <h1 class="text-2xl font-black tracking-tight opacity-90">Weather</h1>
+        <header class="mb-10 flex items-center justify-between">
+            <h1 class="text-sm font-bold tracking-widest uppercase opacity-70">Fake Weather</h1>
             <!-- リフレッシュボタン -->
-            <button id="refresh-btn" class="refresh-btn text-2xl opacity-70 hover:opacity-100 focus:outline-none" aria-label="天気を更新">
-                🔄
+            <button id="refresh-btn" class="refresh-btn p-2 rounded-full hover:bg-white/10 focus:outline-none" aria-label="天気を更新">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             </button>
         </header>
 
         <!-- 天気コンテンツ -->
         <div id="weather-content" class="transition-all duration-500">
             <!-- 天気アイコン -->
-            <div class="h-40 flex items-center justify-center mb-4">
-                <div id="weather-icon" class="text-9xl weather-icon-anim drop-shadow-lg">☀️</div>
+            <div class="h-48 flex items-center justify-center mb-6">
+                <div id="weather-icon-container" class="weather-icon-anim drop-shadow-xl text-white">
+                    <!-- アイコンはここに挿入されます -->
+                    <i data-lucide="sun" class="w-32 h-32" stroke-width="1.5"></i>
+                </div>
             </div>
 
             <!-- 天気状態 -->
-            <h2 id="weather-status" class="text-4xl font-bold mb-2 drop-shadow-md">快晴</h2>
+            <h2 id="weather-status" class="text-3xl font-bold mb-1 tracking-tight drop-shadow-sm fade-slide-up" style="animation-delay: 0.1s;">快晴</h2>
             
             <!-- 気温 -->
-            <p class="text-6xl font-black mb-6 tracking-tighter drop-shadow-md">
-                <span id="temperature">24</span><span class="text-4xl align-top">°C</span>
-            </p>
+            <div class="fade-slide-up" style="animation-delay: 0.2s;">
+                <p class="text-7xl font-bold mb-8 tracking-tighter drop-shadow-md flex justify-center items-start leading-none">
+                    <span id="temperature">24</span><span class="text-3xl font-medium mt-2 ml-1">°C</span>
+                </p>
+            </div>
 
             <!-- 位置情報 -->
-            <div class="flex items-center justify-center gap-2 mb-4 opacity-80 bg-white/10 py-2 px-4 rounded-full mx-auto w-fit backdrop-blur-sm">
-                <span id="location-text" class="text-sm font-medium tracking-wide">現在地</span>
+            <div class="fade-slide-up" style="animation-delay: 0.3s;">
+                <div class="inline-flex items-center justify-center gap-2 bg-white/20 py-2.5 px-5 rounded-full backdrop-blur-md border border-white/10 hover:bg-white/30 transition-colors cursor-default">
+                    <i data-lucide="map-pin" class="w-4 h-4 opacity-80"></i>
+                    <span id="location-text" class="text-sm font-medium tracking-wide">現在地</span>
+                </div>
             </div>
         </div>
 
         <!-- オフライン表示 -->
-        <div id="offline-indicator" class="hidden absolute top-2 right-2 bg-yellow-500/80 text-yellow-900 text-xs px-2 py-1 rounded-full">
-            オフライン
+        <div id="offline-indicator" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
+            OFFLINE
         </div>
 
     </main>
 
     <script>
+        // Lucideアイコンの初期化
+        lucide.createIcons();
+
         // Service Worker登録
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -165,17 +179,17 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // 天気データの定義
+        // 天気データの定義 (Lucideアイコン名を使用)
         const weatherTypes = [
-            { name: '快晴', icon: '☀️', tempRange: [25, 38], bgClass: 'from-orange-400 via-red-300 to-yellow-200', textColor: 'text-orange-100' },
-            { name: '晴れ', icon: '🌤️', tempRange: [20, 30], bgClass: 'from-sky-400 via-blue-300 to-cyan-200', textColor: 'text-white' },
-            { name: '曇り', icon: '☁️', tempRange: [10, 25], bgClass: 'from-gray-400 via-slate-300 to-gray-200', textColor: 'text-gray-100' },
-            { name: '雨', icon: '🌧️', tempRange: [10, 22], bgClass: 'from-blue-700 via-blue-500 to-gray-400', textColor: 'text-blue-100' },
-            { name: '雪', icon: '❄️', tempRange: [-10, 5], bgClass: 'from-indigo-100 via-purple-100 to-white', textColor: 'text-slate-600' },
-            { name: '雷雨', icon: '⛈️', tempRange: [15, 28], bgClass: 'from-slate-900 via-purple-900 to-slate-800', textColor: 'text-purple-100' },
-            { name: '霧', icon: '🌫️', tempRange: [5, 18], bgClass: 'from-stone-300 via-gray-300 to-stone-200', textColor: 'text-stone-600' },
-            { name: '猛暑', icon: '🥵', tempRange: [35, 45], bgClass: 'from-red-600 via-orange-500 to-yellow-500', textColor: 'text-yellow-100' },
-            { name: '極寒', icon: '🥶', tempRange: [-30, -10], bgClass: 'from-cyan-600 via-blue-500 to-indigo-500', textColor: 'text-cyan-100' }
+            { name: '快晴', icon: 'sun', tempRange: [25, 38], bgClass: 'from-orange-400 via-rose-300 to-amber-200', textColor: 'text-white' },
+            { name: '晴れ', icon: 'cloud-sun', tempRange: [20, 30], bgClass: 'from-sky-400 via-blue-300 to-cyan-200', textColor: 'text-white' },
+            { name: '曇り', icon: 'cloud', tempRange: [10, 25], bgClass: 'from-slate-400 via-gray-300 to-zinc-200', textColor: 'text-white' },
+            { name: '雨', icon: 'cloud-rain', tempRange: [10, 22], bgClass: 'from-blue-700 via-blue-500 to-slate-400', textColor: 'text-white' },
+            { name: '雪', icon: 'snowflake', tempRange: [-10, 5], bgClass: 'from-indigo-100 via-purple-100 to-white', textColor: 'text-slate-700' },
+            { name: '雷雨', icon: 'cloud-lightning', tempRange: [15, 28], bgClass: 'from-slate-900 via-purple-900 to-slate-800', textColor: 'text-white' },
+            { name: '霧', icon: 'cloud-fog', tempRange: [5, 18], bgClass: 'from-stone-400 via-gray-300 to-zinc-300', textColor: 'text-white' },
+            { name: '猛暑', icon: 'thermometer-sun', tempRange: [35, 45], bgClass: 'from-red-600 via-orange-500 to-yellow-500', textColor: 'text-white' },
+            { name: '極寒', icon: 'thermometer-snowflake', tempRange: [-30, -10], bgClass: 'from-cyan-700 via-blue-600 to-indigo-600', textColor: 'text-white' }
         ];
 
         // 状態管理
@@ -185,7 +199,7 @@
         // DOM要素
         const ui = {
             body: document.getElementById('app-body'),
-            icon: document.getElementById('weather-icon'),
+            iconContainer: document.getElementById('weather-icon-container'),
             status: document.getElementById('weather-status'),
             temp: document.getElementById('temperature'),
             location: document.getElementById('location-text'),
@@ -260,23 +274,40 @@
             const max = weather.tempRange[1];
             const temp = Math.floor(Math.random() * (max - min + 1)) + min;
 
-            ui.icon.innerText = weather.icon;
+            // アイコン更新
+            ui.iconContainer.innerHTML = `<i data-lucide="${weather.icon}" class="w-32 h-32" stroke-width="1.5"></i>`;
+            lucide.createIcons();
+
             ui.status.innerText = weather.name;
             ui.temp.innerText = temp;
             
             ui.body.className = `min-h-screen flex items-center justify-center p-4 transition-colors duration-1000 bg-gradient-to-br ${weather.bgClass}`;
             
+            // 雪の場合はテキストカラーを暗くする
             if (weather.name === '雪' || weather.name === '霧') {
                 ui.body.classList.add('text-slate-800');
                 ui.body.classList.remove('text-white');
+                ui.iconContainer.classList.add('text-slate-800');
+                ui.iconContainer.classList.remove('text-white');
             } else {
                 ui.body.classList.add('text-white');
                 ui.body.classList.remove('text-slate-800');
+                ui.iconContainer.classList.add('text-white');
+                ui.iconContainer.classList.remove('text-slate-800');
             }
 
-            ui.icon.classList.remove('weather-icon-anim');
-            void ui.icon.offsetWidth;
-            ui.icon.classList.add('weather-icon-anim');
+            // アニメーションリセット
+            ui.iconContainer.classList.remove('weather-icon-anim');
+            void ui.iconContainer.offsetWidth; // リフロー強制
+            ui.iconContainer.classList.add('weather-icon-anim');
+
+            // テキストアニメーションリセット
+            const animatedElements = document.querySelectorAll('.fade-slide-up');
+            animatedElements.forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; /* trigger reflow */
+                el.style.animation = null;
+            });
         }
     </script>
 </body>
