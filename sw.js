@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fake-weather-v1';
+const CACHE_NAME = 'fake-weather-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const ASSETS_TO_CACHE = [
   './icon-512.png',
   'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap',
   'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest'
+  'https://unpkg.com/lucide@1.49.0/dist/umd/lucide.min.js'
 ];
 
 // インストール時にキャッシュ
@@ -51,6 +51,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ページ本体はネットワークファースト（更新を確実に反映し、オフライン時はキャッシュ）
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.ok) {
+            const responseToCache = response.clone();
+            // キャッシュ書き込み完了までSWを終了させない
+            event.waitUntil(
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache))
+            );
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request)
+            .then((cached) => cached || caches.match('./index.html'))
+        )
+    );
+    return;
+  }
+
   // その他のリソースはキャッシュファースト
   event.respondWith(
     caches.match(event.request)
@@ -60,8 +82,8 @@ self.addEventListener('fetch', (event) => {
         }
         return fetch(event.request)
           .then((response) => {
-            // 有効なレスポンスのみキャッシュ
-            if (!response || response.status !== 200 || response.type !== 'basic') {
+            // 有効なレスポンスのみキャッシュ（同一オリジン・CORS対応のCDN）
+            if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
               return response;
             }
             const responseToCache = response.clone();
