@@ -8,6 +8,7 @@
     <!-- PWA設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#6366f1">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="偽天気">
@@ -20,7 +21,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.49.0/dist/umd/lucide.min.js"></script>
     <style>
         /* カスタムスタイル定義 */
         body {
@@ -222,8 +223,7 @@
         // 初期化処理
         document.addEventListener('DOMContentLoaded', () => {
             initLocation();
-            // generateRandomWeather(); // 下記EffectManagerの実装後に呼び出すため一時コメントアウトするか、エラーにならない範囲で動かす
-             generateRandomWeather();
+            generateRandomWeather();
         });
 
         // リフレッシュボタン
@@ -251,10 +251,11 @@
             const lon = position.coords.longitude;
 
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&accept-language=ja&lat=${lat}&lon=${lon}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
-                const address = data.address;
+                const address = data.address || {};
                 const city = address.city || address.ward || address.town || address.village || address.state || "不明な場所";
                 
                 currentLocation = city;
