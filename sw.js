@@ -58,7 +58,10 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response && response.ok) {
             const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+            // キャッシュ書き込み完了までSWを終了させない
+            event.waitUntil(
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache))
+            );
           }
           return response;
         })
